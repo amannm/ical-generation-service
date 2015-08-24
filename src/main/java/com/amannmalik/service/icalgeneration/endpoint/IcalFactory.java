@@ -32,7 +32,8 @@ import net.fortuna.ical4j.model.property.Version;
 
 import java.net.URISyntaxException;
 import java.text.ParseException;
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 /**
@@ -58,7 +59,7 @@ public class IcalFactory {
         properties.add(new Uid(UUID.randomUUID().toString()));
 
         addDetails(properties, event.title, event.description, event.location);
-        addTimes(properties, Instant.now(), event.startInstant.atZone(event.timezone).toInstant(), event.endInstant.atZone(event.timezone).toInstant());
+        addTimes(properties, event.timezone, LocalDateTime.now(), event.startInstant, event.endInstant);
         addOrganizer(properties, event.organizerName, event.organizerEmail);
         addAttendee(properties, event.attendeeName, event.attendeeEmail);
 
@@ -70,17 +71,14 @@ public class IcalFactory {
         return vEvent;
     }
 
-    private static void addTimes(PropertyList properties, Instant created, Instant start, Instant end) {
-        DateTime currentTimestamp = new DateTime(created.toEpochMilli());
-        currentTimestamp.setUtc(true);
+    private static void addTimes(PropertyList properties, ZoneId timezone, LocalDateTime created, LocalDateTime start, LocalDateTime end) {
+        DateTime currentTimestamp = new DateTime(created.atZone(timezone).toInstant().toEpochMilli());
         properties.add(new DtStamp(currentTimestamp));
 
-        DateTime startTimestamp = new DateTime(start.toEpochMilli());
-        startTimestamp.setUtc(true);
+        DateTime startTimestamp = new DateTime(start.atZone(timezone).toInstant().toEpochMilli());
         properties.add(new DtStart(startTimestamp));
 
-        DateTime endTimestamp = new DateTime(end.toEpochMilli());
-        endTimestamp.setUtc(true);
+        DateTime endTimestamp = new DateTime(end.atZone(timezone).toInstant().toEpochMilli());
         properties.add(new DtEnd(endTimestamp));
     }
 

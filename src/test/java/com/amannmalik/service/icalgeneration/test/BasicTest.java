@@ -73,7 +73,7 @@ public class BasicTest {
                 .append("&location=").append("http%3A%2F%2Fgoogle.com")
                 .append("&startTimestamp=").append(eventStartInstant.toString())
                 .append("&endTimestamp=").append(eventEndInstant.toString())
-                .append("&timezone=").append("America/Chicago")
+                .append("&timezone=").append("America/Denver")
                 .append("&reminderOffset=").append(-15);
 
         HttpURLConnection connection = ServiceRequestFactory.get(sb.toString());
@@ -93,10 +93,10 @@ public class BasicTest {
         assertNotNull(vevent);
 
         DateTime dtstart = new DateTime(vevent.getProperty("DTSTART").getValue());
-        assertEquals(eventStartInstant.atZone(ZoneId.of("America/Chicago")).toInstant().toEpochMilli(), dtstart.toInstant().toEpochMilli());
+        assertEquals(eventStartInstant.atZone(ZoneId.of("America/Denver")).toInstant().toEpochMilli(), dtstart.toInstant().toEpochMilli());
 
         DateTime dtend = new DateTime(vevent.getProperty("DTEND").getValue());
-        assertEquals(eventEndInstant.atZone(ZoneId.of("America/Chicago")).toInstant().toEpochMilli(), dtend.toInstant().toEpochMilli());
+        assertEquals(eventEndInstant.atZone(ZoneId.of("America/Denver")).toInstant().toEpochMilli(), dtend.toInstant().toEpochMilli());
 
 
     }
