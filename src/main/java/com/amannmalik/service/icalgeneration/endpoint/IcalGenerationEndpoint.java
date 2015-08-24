@@ -18,6 +18,7 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 /**
@@ -47,12 +48,16 @@ public class IcalGenerationEndpoint extends HttpServlet {
         String location = map.containsKey("location") ? map.get("location")[0] : null;
         int alarm = map.containsKey("reminderOffset") ? Integer.parseInt(map.get("reminderOffset")[0]) : -15;
 
-
-
         String startTimestampString = map.containsKey("startTimestamp") ? map.get("startTimestamp")[0] : null;
-        String endTimestampString = map.containsKey("endTimestamp") ? map.get("endTimestamp")[0] : null;
         LocalDateTime startInstant = LocalDateTime.parse(startTimestampString);
-        LocalDateTime endInstant = LocalDateTime.parse(endTimestampString);
+
+        String endTimestampString = map.containsKey("endTimestamp") ? map.get("endTimestamp")[0] : null;
+        LocalDateTime endInstant;
+        if (endTimestampString != null) {
+            endInstant = LocalDateTime.parse(endTimestampString);
+        } else {
+            endInstant = startInstant.plus(1L, ChronoUnit.HOURS);
+        }
 
         String timezoneString = map.containsKey("timezone") ? map.get("timezone")[0] : null;
         ZoneId timezone = ZoneId.of(timezoneString);
