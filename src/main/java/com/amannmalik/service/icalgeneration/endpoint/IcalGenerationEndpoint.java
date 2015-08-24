@@ -16,7 +16,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.text.ParseException;
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Map;
 
 /**
@@ -32,26 +33,34 @@ public class IcalGenerationEndpoint extends HttpServlet {
 
         Map<String, String[]> map = req.getParameterMap();
 
-        String eventName = map.containsKey("eventName") ? map.get("eventName")[0] : null;
-        String eventDescription = map.containsKey("eventDescription") ? map.get("eventDescription")[0] : null;
-        String eventSummary = map.containsKey("eventSummary") ? map.get("eventSummary")[0] : null;
+        String filename = map.containsKey("filename") ? map.get("filename")[0] : "event.ics";
+        if (!filename.endsWith(".ics")) {
+            filename = filename + ".ics";
+        }
+
+        String title = map.containsKey("title") ? map.get("title")[0] : null;
+        String description = map.containsKey("description") ? map.get("description")[0] : null;
         String organizerName = map.containsKey("organizerName") ? map.get("organizerName")[0] : null;
         String organizerEmail = map.containsKey("organizerEmail") ? map.get("organizerEmail")[0] : null;
         String attendeeName = map.containsKey("attendeeName") ? map.get("attendeeName")[0] : null;
         String attendeeEmail = map.containsKey("attendeeEmail") ? map.get("attendeeEmail")[0] : null;
         String location = map.containsKey("location") ? map.get("location")[0] : null;
+        int alarm = map.containsKey("reminderOffset") ? Integer.parseInt(map.get("reminderOffset")[0]) : -15;
+
+
+
         String startTimestampString = map.containsKey("startTimestamp") ? map.get("startTimestamp")[0] : null;
         String endTimestampString = map.containsKey("endTimestamp") ? map.get("endTimestamp")[0] : null;
-        int alarm = map.containsKey("alarmOffset") ? Integer.parseInt(map.get("alarmOffset")[0]) : -15;
+        LocalDateTime startInstant = LocalDateTime.parse(startTimestampString);
+        LocalDateTime endInstant = LocalDateTime.parse(endTimestampString);
 
+        String timezoneString = map.containsKey("timezone") ? map.get("timezone")[0] : null;
+        ZoneId timezone = ZoneId.of(timezoneString);
 
-        Instant startInstant = Instant.parse(startTimestampString);
-        Instant endInstant = Instant.parse(endTimestampString);
 
         CalendarEvent calendarEvent = new CalendarEvent(
-                eventName,
-                eventDescription,
-                eventSummary,
+                title,
+                description,
                 organizerName,
                 organizerEmail,
                 attendeeName,
@@ -59,6 +68,7 @@ public class IcalGenerationEndpoint extends HttpServlet {
                 location,
                 startInstant,
                 endInstant,
+                timezone,
                 alarm
         );
 
@@ -68,18 +78,19 @@ public class IcalGenerationEndpoint extends HttpServlet {
             VEvent vEvent = IcalFactory.generateEvent(calendarEvent);
             calendar.getComponents().add(vEvent);
         } catch (ParseException | URISyntaxException e) {
-            LoggerFactory.getLogger(IcalGenerationEndpoint.class).error("", e);
+            LoggerFactory.getLogger(IcalGenerationEndpoint.class).error("error while generating ical event", e);
             resp.sendError(500);
             return;
         }
 
         resp.setContentType("text/calendar");
+        resp.setHeader("Content-Disposition", "attachment; filename=" + filename);
 
         try (OutputStream stream = resp.getOutputStream()) {
             CalendarOutputter outputter = new CalendarOutputter();
             outputter.output(calendar, stream);
         } catch (ValidationException e) {
-            LoggerFactory.getLogger(IcalGenerationEndpoint.class).error("", e);
+            LoggerFactory.getLogger(IcalGenerationEndpoint.class).error("exception while writing ical response", e);
             resp.sendError(500);
         }
 

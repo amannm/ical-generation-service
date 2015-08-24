@@ -55,20 +55,16 @@ public class IcalFactory {
     public static VEvent generateEvent(CalendarEvent event) throws ParseException, URISyntaxException {
 
         PropertyList properties = new PropertyList();
-
-
         properties.add(new Uid(UUID.randomUUID().toString()));
 
-
-        addDetails(properties, event.eventSummary, event.eventDescription, event.location);
-        addTimes(properties, Instant.now(), event.startInstant, event.endInstant);
+        addDetails(properties, event.title, event.description, event.location);
+        addTimes(properties, Instant.now(), event.startInstant.atZone(event.timezone).toInstant(), event.endInstant.atZone(event.timezone).toInstant());
         addOrganizer(properties, event.organizerName, event.organizerEmail);
         addAttendee(properties, event.attendeeName, event.attendeeEmail);
 
+        VEvent vEvent = new VEvent(properties);
 
         VAlarm alarm = generateReminder(event.reminder);
-
-        VEvent vEvent = new VEvent(properties);
         vEvent.getAlarms().add(alarm);
 
         return vEvent;
@@ -94,7 +90,7 @@ public class IcalFactory {
         properties.add(new Summary(languageParams, summary));
         properties.add(new Description(languageParams, description));
         properties.add(new Location(languageParams, location));
-        properties.add(Clazz.PRIVATE);
+        properties.add(Clazz.PUBLIC);
         properties.add(Status.VEVENT_CONFIRMED);
     }
 
@@ -112,6 +108,8 @@ public class IcalFactory {
         ParameterList params = new ParameterList();
         params.add(new Cn(organizerName));
         properties.add(new Organizer(params, "MAILTO:" + organizerEmail));
+
+        addAttendee(properties, organizerName, organizerEmail);
     }
 
     private static void addAttendee(PropertyList properties, String attendeeName, String attendeeEmail) throws URISyntaxException {

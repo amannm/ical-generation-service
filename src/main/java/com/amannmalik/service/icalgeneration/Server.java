@@ -11,6 +11,8 @@ import io.undertow.servlet.api.ServletContainer;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 
 /**
@@ -60,6 +62,8 @@ public class Server {
         ((Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).setLevel(Level.DEBUG);
         Server server = new Server(address, port);
         server.start();
+
+        generateTestRequest();
     }
 
     private static String getAddress(String... args) {
@@ -77,6 +81,24 @@ public class Server {
             }
         }
         return 8080;
+    }
+
+    private static void generateTestRequest() {
+        Instant eventStartInstant = Instant.now().plus(1L, ChronoUnit.HOURS).truncatedTo(ChronoUnit.SECONDS);
+        Instant eventEndInstant = Instant.now().plus(2L, ChronoUnit.HOURS).truncatedTo(ChronoUnit.SECONDS);
+        StringBuilder sb = new StringBuilder();
+        sb.append("?filename=").append("test.ics")
+                .append("&title=").append("Test%20Event")
+                .append("&description=").append("This%20is%20a%20Test%20Event")
+                .append("&organizerName=").append("Amann%20Malik")
+                .append("&organizerEmail=").append("amannmalik@gmail.com")
+                .append("&attendeeName=").append("John%20Doe")
+                .append("&attendeeEmail=").append("johndoe@test.com")
+                .append("&location=").append("http%3A%2F%2Fgoogle.com")
+                .append("&startTimestamp=").append(eventStartInstant.toString())
+                .append("&endTimestamp=").append(eventEndInstant.toString())
+                .append("&reminderOffset=").append(-15);
+        System.out.println(sb.toString());
     }
 
 }

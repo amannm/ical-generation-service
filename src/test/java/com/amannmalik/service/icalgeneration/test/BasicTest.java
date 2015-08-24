@@ -18,7 +18,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.text.ParseException;
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -59,20 +60,21 @@ public class BasicTest {
 
         StringBuilder sb = new StringBuilder(testScheme + testAddress + ":" + testPort + testEndpoint);
 
-        Instant eventStartInstant = Instant.now().plus(1L, ChronoUnit.HOURS).truncatedTo(ChronoUnit.SECONDS);
-        Instant eventEndInstant = Instant.now().plus(2L, ChronoUnit.HOURS).truncatedTo(ChronoUnit.SECONDS);
+        LocalDateTime eventStartInstant = LocalDateTime.now().plus(1L, ChronoUnit.HOURS).truncatedTo(ChronoUnit.SECONDS);
+        LocalDateTime eventEndInstant = LocalDateTime.now().plus(2L, ChronoUnit.HOURS).truncatedTo(ChronoUnit.SECONDS);
 
-        sb.append("?eventName=").append("test")
-                .append("&eventDescription=").append("test")
-                .append("&eventSummary=").append("test")
+        sb.append("?filename=").append("test.ics")
+                .append("&title=").append("Test%20Event")
+                .append("&description=").append("This%20is%20a%20Test%20Event")
                 .append("&organizerName=").append("Amann%20Malik")
                 .append("&organizerEmail=").append("amannmalik@gmail.com")
-                .append("&attendeeName=").append("Amann%20Malik")
-                .append("&attendeeEmail=").append("amannmalik@gmail.com")
-                .append("&location=").append("test")
+                .append("&attendeeName=").append("John%20Doe")
+                .append("&attendeeEmail=").append("johndoe@test.com")
+                .append("&location=").append("http%3A%2F%2Fgoogle.com")
                 .append("&startTimestamp=").append(eventStartInstant.toString())
                 .append("&endTimestamp=").append(eventEndInstant.toString())
-                .append("&alarmOffset=").append(-15);
+                .append("&timezone=").append("America/Chicago")
+                .append("&reminderOffset=").append(-15);
 
         HttpURLConnection connection = ServiceRequestFactory.get(sb.toString());
         int responseCode = connection.getResponseCode();
@@ -91,10 +93,10 @@ public class BasicTest {
         assertNotNull(vevent);
 
         DateTime dtstart = new DateTime(vevent.getProperty("DTSTART").getValue());
-        assertEquals(eventStartInstant.toEpochMilli(), dtstart.toInstant().toEpochMilli());
+        assertEquals(eventStartInstant.atZone(ZoneId.of("America/Chicago")).toInstant().toEpochMilli(), dtstart.toInstant().toEpochMilli());
 
-        DateTime dtend = new DateTime(vevent.getProperty("DTSTART").getValue());
-        assertEquals(eventEndInstant.toEpochMilli(), dtend.toInstant().toEpochMilli());
+        DateTime dtend = new DateTime(vevent.getProperty("DTEND").getValue());
+        assertEquals(eventEndInstant.atZone(ZoneId.of("America/Chicago")).toInstant().toEpochMilli(), dtend.toInstant().toEpochMilli());
 
 
     }
